@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Nao envia o endereco desta pagina (com o codigo) para nenhum outro site -->
+  <meta name="referrer" content="no-referrer">
+  <!-- Bloqueia qualquer conexao externa: a pagina so mostra o que veio no endereco -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Central BellaPatas - Autorizacao</title>
+  <style>
+    :root { --bg: #f6f7f9; --card: #ffffff; --text: #1f2933; --muted: #5f6b7a; --ok: #1a7f37; --err: #c62828; --btn: #2d6cdf; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #111418; --card: #1b2027; --text: #e6e9ee; --muted: #9aa5b4; --ok: #4cc26b; --err: #ff6b6b; --btn: #4d8bf5; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 640px; margin: 48px auto; padding: 0 16px; }
+    .card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+    h1 { font-size: 1.4rem; margin: 0 0 8px; }
+    p { margin: 8px 0; color: var(--muted); }
+    .ok { color: var(--ok); font-weight: 600; }
+    .err { color: var(--err); font-weight: 600; }
+    textarea { width: 100%; height: 110px; margin: 12px 0; padding: 10px; border-radius: 8px; border: 1px solid var(--muted); background: var(--bg); color: var(--text); font: 13px/1.4 Consolas, monospace; resize: none; }
+    button { background: var(--btn); color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 1rem; cursor: pointer; }
+    #copiado { margin-left: 12px; color: var(--ok); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>Central BellaPatas</h1>
+
+    <div id="sucesso" hidden>
+      <p class="ok">Autorizacao recebida do Mercado Livre.</p>
+      <p>Clique em <b>Copiar</b> e cole no programa da Central, que esta aguardando no seu computador. Faca isso em ate 5 minutos.</p>
+      <textarea id="resposta" readonly></textarea>
+      <button id="copiar" type="button">Copiar</button><span id="copiado" hidden>Copiado!</span>
+      <p>Depois de colar, pode fechar esta pagina. Nao envie este texto para ninguem.</p>
+    </div>
+
+    <div id="erro" hidden>
+      <p class="err">O Mercado Livre nao concluiu a autorizacao.</p>
+      <p id="erro-detalhe"></p>
+      <p>Volte ao programa da Central e tente de novo.</p>
+    </div>
+
+    <div id="vazio" hidden>
+      <p>Esta pagina recebe a resposta da autorizacao do Mercado Livre para a Central BellaPatas.</p>
+      <p>Nao ha nada para fazer aqui agora.</p>
+    </div>
+  </div>
+</main>
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var code = params.get("code");
+    var state = params.get("state");
+    var erro = params.get("error");
+
+    if (code) {
+      // Copia o codigo e o state juntos, para o programa local conferir o state
+      var texto = "code=" + code + "&state=" + (state || "");
+      document.getElementById("resposta").value = texto;
+      document.getElementById("sucesso").hidden = false;
+      document.getElementById("copiar").addEventListener("click", function () {
+        var campo = document.getElementById("resposta");
+        campo.select();
+        var feito = function () { document.getElementById("copiado").hidden = false; };
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(texto).then(feito, function () { document.execCommand("copy"); feito(); });
+        } else {
+          document.execCommand("copy");
+          feito();
+        }
+      });
+    } else if (erro) {
+      document.getElementById("erro-detalhe").textContent =
+        "Motivo informado: " + erro + (params.get("error_description") ? " - " + params.get("error_description") : "");
+      document.getElementById("erro").hidden = false;
+    } else {
+      document.getElementById("vazio").hidden = false;
+    }
+
+    // Tira o codigo da barra de endereco e do historico do navegador
+    if (window.location.search) {
+      history.replaceState(null, "", window.location.pathname);
+    }
+  })();
+</script>
+</body>
+</html>
